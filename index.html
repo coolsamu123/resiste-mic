@@ -63,11 +63,24 @@
     </div>
   </div>
 
-  <div id="message" class="message">Clique et dis « résiste »</div>
+  <div id="message" class="message"></div>
 
   <script>
     const micBtn = document.getElementById("mic");
     const message = document.getElementById("message");
+
+    // Fonction pour normaliser un texte (minuscules + sans accents)
+    function normalize(text) {
+      return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    }
+
+    // Récupère le mot depuis l'URL (?mot=...), sinon "résiste" par défaut
+    const params = new URLSearchParams(window.location.search);
+    const motCible = params.get("mot") || "résiste";
+    const motCibleNorm = normalize(motCible);
+
+    // Message initial
+    message.textContent = "Clique et dis « " + motCible + " »";
 
     micBtn.addEventListener("click", () => {
       const recognition = new webkitSpeechRecognition();
@@ -76,15 +89,16 @@
       recognition.maxAlternatives = 1;
 
       message.textContent = " Écoute en cours...";
+      message.style.color = "#333";
 
       recognition.onresult = function(event) {
-        const speech = event.results[0][0].transcript.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        if (speech.includes("resiste")) {
+        const speech = normalize(event.results[0][0].transcript);
+        if (speech.includes(motCibleNorm)) {
           micBtn.classList.add("valid");
           message.textContent = " Bravo !";
           message.style.color = "green";
         } else {
-          message.textContent = " Ce n'était pas « résiste ». Réessaie.";
+          message.textContent = " Ce n'était pas « " + motCible + " ». Réessaie.";
           message.style.color = "red";
         }
       };
